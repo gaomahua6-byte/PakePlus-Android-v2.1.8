@@ -1,11 +1,601 @@
 <!DOCTYPE html>
 <html lang="en">
-    <head>
-        <meta charset="UTF-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>PakePlus</title>
-    </head>
-    <body>
-        PakePlus
-    </body>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>声畔 · 英语口语AI</title>
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <!-- 简单干净的语言学习风格 -->
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+        body {
+            min-height: 100vh;
+            background: linear-gradient(145deg, #f0f5fe 0%, #e9f0fa 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 16px;
+        }
+        .app-card {
+            max-width: 1000px;
+            width: 100%;
+            height: 85vh;
+            background: rgba(255,255,255,0.7);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-radius: 42px;
+            box-shadow: 0 30px 60px rgba(0,20,50,0.15), 0 10px 25px rgba(0,10,30,0.1), inset 0 2px 4px rgba(255,255,255,0.8);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            border: 1px solid rgba(255,255,255,0.5);
+        }
+
+        /* 头部 */
+        .header {
+            padding: 24px 32px 12px 32px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .logo-area {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .logo-icon {
+            background: #2E5C8E;
+            color: white;
+            width: 44px;
+            height: 44px;
+            border-radius: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            box-shadow: 0 8px 14px rgba(46,92,142,0.25);
+        }
+        .logo-text h1 {
+            font-size: 1.6rem;
+            font-weight: 600;
+            color: #1A2E45;
+            letter-spacing: -0.5px;
+        }
+        .logo-text p {
+            font-size: 0.85rem;
+            color: #4f6f8f;
+            font-weight: 400;
+            margin-top: 2px;
+        }
+        .streak-badge {
+            background: white;
+            padding: 8px 18px;
+            border-radius: 60px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: #2E5C8E;
+            box-shadow: 0 5px 12px rgba(0,0,0,0.02);
+            border: 1px solid rgba(255,255,255,0.7);
+        }
+        .streak-badge i {
+            color: #FFB347;
+            margin-right: 6px;
+        }
+
+        /* 主聊天区域 */
+        .chat-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 16px 32px 8px 32px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            scroll-behavior: smooth;
+            /* 隐藏但是保留功能 */
+        }
+        .chat-container::-webkit-scrollbar {
+            width: 6px;
+        }
+        .chat-container::-webkit-scrollbar-thumb {
+            background: rgba(46,92,142,0.25);
+            border-radius: 20px;
+        }
+
+        /* 气泡公共 */
+        .message {
+            display: flex;
+            align-items: flex-end;
+            gap: 10px;
+            max-width: 85%;
+            animation: fadeIn 0.3s ease;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .message.user {
+            align-self: flex-end;
+            flex-direction: row-reverse;
+        }
+        .avatar {
+            width: 38px;
+            height: 38px;
+            border-radius: 38px;
+            background: #CBD9EA;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            color: #2E5C8E;
+            flex-shrink: 0;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.05);
+        }
+        .avatar.ai {
+            background: #2E5C8E;
+            color: white;
+        }
+        .bubble {
+            padding: 14px 18px;
+            border-radius: 24px;
+            font-size: 1rem;
+            line-height: 1.5;
+            word-break: break-word;
+            box-shadow: 0 4px 12px rgba(0,20,30,0.08);
+        }
+        .user .bubble {
+            background: #2E5C8E;
+            color: white;
+            border-bottom-right-radius: 6px;
+        }
+        .ai .bubble {
+            background: white;
+            color: #1A2E45;
+            border-bottom-left-radius: 6px;
+            border: 1px solid rgba(255,255,255,0.6);
+        }
+
+        /* 气泡内的微元素 */
+        .word-pronounce {
+            background: #E5EEF9;
+            border-radius: 30px;
+            padding: 6px 16px;
+            margin: 8px 0 4px 0;
+            display: inline-flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 1.05rem;
+            border: 1px solid white;
+        }
+        .word-pronounce i {
+            color: #2E5C8E;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .word-pronounce i:hover {
+            transform: scale(1.1);
+            color: #1e3f62;
+        }
+        .phonetic {
+            font-family: 'Courier New', monospace;
+            background: #f9fbfd;
+            padding: 4px 10px;
+            border-radius: 40px;
+            font-size: 0.95rem;
+            color: #2b4b6f;
+        }
+        .learn-tip {
+            background: #D9E9FA;
+            border-radius: 16px;
+            padding: 8px 14px;
+            margin-top: 8px;
+            font-size: 0.9rem;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            border-left: 4px solid #2E5C8E;
+        }
+
+        /* 底部控制栏 */
+        .input-area {
+            background: white;
+            margin: 16px 32px 24px 32px;
+            padding: 12px 12px 12px 24px;
+            border-radius: 60px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 10px 25px rgba(0,20,40,0.1);
+            border: 1px solid rgba(255,255,255,0.9);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .input-field {
+            flex: 1;
+            border: none;
+            outline: none;
+            font-size: 1rem;
+            padding: 8px 0;
+            background: transparent;
+            color: #1A2E45;
+        }
+        .input-field::placeholder {
+            color: #8AA3C0;
+            font-weight: 300;
+        }
+        .action-btn {
+            background: #EFF3F9;
+            border: none;
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            color: #2E5C8E;
+            font-size: 1.3rem;
+            cursor: pointer;
+            transition: 0.2s;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.02);
+        }
+        .action-btn:hover {
+            background: #2E5C8E;
+            color: white;
+            transform: scale(1.05);
+        }
+        .action-btn.record {
+            background: #FFE5D9;
+            color: #D95C5C;
+        }
+        .action-btn.record.active {
+            background: #D95C5C;
+            color: white;
+            animation: pulse 1.5s infinite;
+        }
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(217,92,92,0.5); }
+            70% { box-shadow: 0 0 0 10px rgba(217,92,92,0); }
+            100% { box-shadow: 0 0 0 0 rgba(217,92,92,0); }
+        }
+        .action-btn.send {
+            background: #2E5C8E;
+            color: white;
+        }
+
+        /* 小贴士卡片 */
+        .suggestion-chips {
+            display: flex;
+            gap: 12px;
+            padding: 0px 32px 10px 32px;
+            flex-wrap: wrap;
+        }
+        .chip {
+            background: rgba(255,255,255,0.7);
+            border: 1px solid rgba(255,255,255,0.8);
+            padding: 8px 18px;
+            border-radius: 40px;
+            font-size: 0.9rem;
+            color: #1A2E45;
+            font-weight: 500;
+            backdrop-filter: blur(4px);
+            cursor: pointer;
+            transition: 0.15s;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.02);
+        }
+        .chip:hover {
+            background: white;
+            border-color: #2E5C8E;
+            color: #2E5C8E;
+        }
+        .chip i {
+            margin-right: 6px;
+            font-size: 0.8rem;
+            color: #2E5C8E;
+        }
+
+        /* 学习状态 */
+        .listening-indicator {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: #2E5C8E;
+            font-size: 0.9rem;
+            padding-left: 32px;
+            height: 20px;
+        }
+        .dot-typing {
+            display: inline-flex;
+            gap: 4px;
+        }
+        .dot-typing span {
+            width: 6px;
+            height: 6px;
+            background: #2E5C8E;
+            border-radius: 50%;
+            opacity: 0.6;
+            animation: typing 1.4s infinite;
+        }
+        .dot-typing span:nth-child(2) { animation-delay: 0.2s; }
+        .dot-typing span:nth-child(3) { animation-delay: 0.4s; }
+        @keyframes typing {
+            0%,60%,100% { transform: translateY(0); opacity: 0.4; }
+            30% { transform: translateY(-5px); opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+    <div class="app-card">
+        <!-- 头部 -->
+        <div class="header">
+            <div class="logo-area">
+                <div class="logo-icon"><i class="fas fa-comment-dots"></i></div>
+                <div class="logo-text">
+                    <h1>SpeakEase AI</h1>
+                    <p>每日口语 · 发音伙伴</p>
+                </div>
+            </div>
+            <div class="streak-badge">
+                <i class="fas fa-fire"></i> 连续 5 天
+            </div>
+        </div>
+
+        <!-- 聊天气泡区域 (动态添加) -->
+        <div id="chatMessages" class="chat-container">
+            <!-- 初始ai问候消息会通过JS动态加载，也可以保留一个静态占位，但让JS完全控制 -->
+        </div>
+
+        <!-- 快捷词语查询提示 -->
+        <div class="suggestion-chips" id="suggestionChips">
+            <div class="chip" data-query="pronounce thorough"><i class="fas fa-volume-up"></i> thorough 发音</div>
+            <div class="chip" data-query="how to say 坚持"><i class="fas fa-language"></i> “坚持”英语</div>
+            <div class="chip" data-query="difference between affect effect"><i class="fas fa-code-branch"></i> affect vs effect</div>
+            <div class="chip" data-query="chat about weekend"><i class="fas fa-comment"></i> 聊周末计划</div>
+        </div>
+
+        <!-- 语音/打字输入栏 -->
+        <div class="input-area">
+            <input type="text" id="messageInput" class="input-field" placeholder="输入英文或中文，问我单词发音或直接聊天..." value="how to say '你好' in english?">
+            <button class="action-btn" id="emojiBtn"><i class="far fa-laugh"></i></button>
+            <button class="action-btn record" id="recordBtn"><i class="fas fa-microphone"></i></button>
+            <button class="action-btn send" id="sendBtn"><i class="fas fa-paper-plane"></i></button>
+        </div>
+
+        <!-- 底部实时状态 (模拟语音识别) -->
+        <div class="listening-indicator" id="listeningIndicator">
+            <div class="dot-typing"><span></span><span></span><span></span></div>
+            <span id="listeningText">AI 准备就绪</span>
+        </div>
+    </div>
+
+    <script>
+        (function() {
+            // ---------- 模拟数据库 / 对话状态 ----------
+            const chatMessagesDiv = document.getElementById('chatMessages');
+            const messageInput = document.getElementById('messageInput');
+            const sendBtn = document.getElementById('sendBtn');
+            const recordBtn = document.getElementById('recordBtn');
+            const listeningText = document.getElementById('listeningText');
+            const suggestionChips = document.querySelectorAll('.chip');
+
+            // 对话历史（UI 线程数据）
+            let messages = [
+                { role: 'ai', content: '👋 嗨！我是你的口语AI。你可以问我单词的读音，比如 “pronounce thought”，或者直接聊天。试试语音输入！', timestamp: Date.now() - 60000 }
+            ];
+
+            // 当前是否正在录音(模拟)
+            let isRecording = false;
+            // 用于语音合成 (发音)
+            const synth = window.speechSynthesis;
+
+            // ---------- 渲染聊天记录 ----------
+            function renderMessages() {
+                chatMessagesDiv.innerHTML = '';
+                messages.forEach(msg => {
+                    const messageDiv = document.createElement('div');
+                    messageDiv.className = `message ${msg.role}`;
+
+                    // 头像
+                    const avatarDiv = document.createElement('div');
+                    avatarDiv.className = `avatar ${msg.role}`;
+                    avatarDiv.innerHTML = msg.role === 'ai' ? '<i class="fas fa-robot"></i>' : '<i class="fas fa-user"></i>';
+
+                    // 气泡
+                    const bubbleDiv = document.createElement('div');
+                    bubbleDiv.className = 'bubble';
+
+                    // 智能格式化: 如果AI回答包含发音或学习提示，可增加交互。但这里用innerHTML并且额外处理单词读法。
+                    // 同时检查是否有类似发音卡片标记 (发音用<span>包裹)
+                    bubbleDiv.innerHTML = formatMessageContent(msg.content);
+
+                    messageDiv.appendChild(avatarDiv);
+                    messageDiv.appendChild(bubbleDiv);
+                    chatMessagesDiv.appendChild(messageDiv);
+                });
+                // 滚动到底部
+                chatMessagesDiv.scrollTop = chatMessagesDiv.scrollHeight;
+            }
+
+            // 辅助：使气泡内容可以点击小喇叭发音
+            function formatMessageContent(text) {
+                // 简单换行
+                let escaped = text.replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\n/g, '<br>');
+                // 但是要保留我们特意加入的发音组件标记 [发音: word] 或手动构造。我们采用动态添加“小喇叭”在特定单词后。
+                // 为了演示，如果文本包含“读音”或“发音”，我们添加一个可点击的音标卡片。
+                // 实际上在生成AI消息时我们会植入html，这里不能重复转义。
+                // 所以改进: 如果内容是字符串，且无标签，就普通显示。但是我们会用安全方式，不过可以在生成AI消息时直接构造对象。
+                // 但为了保持功能，我们在动态生成AI消息时使用对象content包含html，但现在采用一个约定：检测content是否含html，如果含<，就直接使用。
+                if (text.includes('<') && text.includes('>')) {
+                    return text; // 已经是html片段
+                }
+                // 普通文本增加点击发音支持: 将所有单词尝试增加小喇叭 (简化，仅匹配单词边界，但为了UI整洁只对含“『”的自定义格式处理)
+                // 这里简单做：如果文本包含“『”和“』”，转换为发音按钮。否则原样。
+                if (text.includes('『') && text.includes('』')) {
+                    return text.replace(/『(.*?)』/g, '<span class="word-pronounce">$1 <i class="fas fa-volume-up" onclick="window.speakText(\'$1\')"></i><span class="phonetic">/ˈeksəmpəl/</span></span>');
+                }
+                return text;
+            }
+
+            // 全局挂载发音函数
+            window.speakText = function(word) {
+                const utterance = new SpeechSynthesisUtterance(word);
+                utterance.lang = 'en-US';
+                utterance.rate = 0.9;
+                synth.speak(utterance);
+                listeningText.innerText = `🔊 朗读: ${word}`;
+                setTimeout(() => { listeningText.innerText = '点击话筒开始语音对话'; }, 1500);
+            };
+
+            // 添加一条消息 (自动重绘)
+            function addMessage(role, content) {
+                messages.push({ role, content, timestamp: Date.now() });
+                renderMessages();
+            }
+
+            // 模拟AI响应 (根据用户输入)
+            function generateAIResponse(userInput) {
+                const lower = userInput.toLowerCase();
+
+                // 发音查询模式 (pronounce xxx, 怎么读, 读音)
+                if (lower.includes('pronounce') || lower.includes('读音') || lower.includes('怎么读') || lower.includes('读法') || lower.startsWith('how to say')) {
+                    // 提取可能的单词
+                    let words = userInput.match(/[a-zA-Z]+/g) || [];
+                    let targetWord = words.find(w => w.length > 2 && !['how','to','say','pronounce','what','is','the'].includes(w.toLowerCase())) || 'example';
+                    if (lower.includes('thorough')) targetWord = 'thorough';
+                    if (lower.includes('through')) targetWord = 'through';
+                    if ( lower.includes('thought')) targetWord = 'thought';
+                    if (lower.includes('你好')) targetWord = 'hello';
+                    
+                    // 返回一个带发音卡片的丰富内容
+                    return `单词 「${targetWord}」 读作:  <span class="word-pronounce">${targetWord} <i class="fas fa-volume-up" onclick="window.speakText('${targetWord}')"></i><span class="phonetic">/${targetWord === 'thorough' ? 'ˈθɜːroʊ' : targetWord === 'hello' ? 'həˈloʊ' : 'ɪɡˈzæmpəl/'}</span></span><br><span class="learn-tip"><i class="fas fa-lightbulb"></i> 再跟我读一遍？或者试试用这个词造个句子。</span>`;
+                }
+
+                // 简单聊天 (同时可能嵌入学习点)
+                if (lower.includes('how are you')) {
+                    return "I'm doing great, thanks for asking! 你最近怎么样？想聊聊什么话题？";
+                } else if (lower.includes('weekend') || lower.includes('周末')) {
+                    return "My weekend was peaceful! I read a book about AI. 你呢？周末有没有有趣的事？(也可以问我某个词的发音)";
+                } else if (lower.includes('difference') || lower.includes('区别')) {
+                    return "『Affect』通常是动词（影响），『Effect』通常是名词（效果）。举个例子：\n • The weather affects my mood.\n • The new law had a positive effect. <span class=\"word-pronounce\" onclick=\"window.speakText('affect')\">affect <i class=\"fas fa-volume-up\"></i></span>  <span class=\"word-pronounce\" onclick=\"window.speakText('effect')\">effect <i class=\"fas fa-volume-up\"></i></span>";
+                } else if (lower.includes('坚持')) {
+                    return "『坚持』可以用 persistence 或者 perseverance。例句: 'Learning a language takes persistence.'  <span class=\"word-pronounce\">persistence <i class=\"fas fa-volume-up\" onclick=\"window.speakText('persistence')\"></i></span>";
+                } else {
+                    // 默认闲聊 + 扩展
+                    return "That's interesting! 对了，想不想学一个常用表达？比如 'It's a piece of cake' 意思是小菜一碟。 <span class=\"word-pronounce\">piece of cake <i class=\"fas fa-volume-up\" onclick=\"window.speakText('piece of cake')\"></i></span>";
+                }
+            }
+
+            // 处理用户发送消息 (文本)
+            function handleUserMessage(text) {
+                if (!text.trim()) return;
+                // 加入用户消息
+                addMessage('user', text);
+                // 模拟AI正在输入状态
+                listeningText.innerText = 'AI 正在思考...';
+                // 模拟网络延迟
+                setTimeout(() => {
+                    const aiResponse = generateAIResponse(text);
+                    addMessage('ai', aiResponse);
+                    listeningText.innerText = '正在聆听... 点击话筒开始说话';
+                    // 尝试自动朗读最后单词? 不自动读，避免嘈杂，但可以高亮。
+                }, 800);
+            }
+
+            // 发送事件
+            sendBtn.addEventListener('click', () => {
+                const txt = messageInput.value.trim();
+                if (txt) {
+                    handleUserMessage(txt);
+                    messageInput.value = '';  // 清空
+                }
+            });
+
+            messageInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    sendBtn.click();
+                }
+            });
+
+            // 语音模拟：点击录音按钮切换状态
+            recordBtn.addEventListener('click', () => {
+                if (!isRecording) {
+                    // 开始模拟录音
+                    isRecording = true;
+                    recordBtn.classList.add('active');
+                    listeningText.innerText = '🎙️ 录音中... 请说出你的问题 (模拟)';
+                    // 模拟3秒后得到一段语音识别文本
+                    setTimeout(() => {
+                        if (isRecording) {
+                            // 模拟不同的语音输入
+                            const demoPhrases = ['how to pronounce thorough', 'what is the difference between affect and effect', 'i want to chat about travel', '坚持用英语怎么说'];
+                            const randomPhrase = demoPhrases[Math.floor(Math.random() * demoPhrases.length)];
+                            // 自动填入输入框并发送（模仿语音识别后直接发送）
+                            messageInput.value = randomPhrase;
+                            listeningText.innerText = '✅ 识别: "' + randomPhrase + '"';
+                            // 可以自动发送
+                            handleUserMessage(randomPhrase);
+                            messageInput.value = '';  // 清空
+                            // 关闭录音状态
+                            isRecording = false;
+                            recordBtn.classList.remove('active');
+                        }
+                    }, 2800);
+                } else {
+                    // 手动停止
+                    isRecording = false;
+                    recordBtn.classList.remove('active');
+                    listeningText.innerText = '录音已取消';
+                    setTimeout(() => { listeningText.innerText = '点击话筒开始语音对话'; }, 1200);
+                }
+            });
+
+            // 快捷chip点击
+            suggestionChips.forEach(chip => {
+                chip.addEventListener('click', (e) => {
+                    const query = chip.getAttribute('data-query');
+                    if (query) {
+                        messageInput.value = query;
+                        sendBtn.click();
+                    }
+                });
+            });
+
+            // 初始化渲染
+            renderMessages();
+            // 再额外加一个欢迎后的指导消息(可选)
+            setTimeout(() => {
+                if (messages.length === 1) {
+                    // 增加一条例子，不显得空
+                    addMessage('ai', '你可以直接问：“『pronounce』这个词怎么读？” 或者 “how to say 奋斗”。我会演示读音。');
+                }
+            }, 400);
+
+            // 模拟emoji按钮 (只是趣味)
+            document.getElementById('emojiBtn').addEventListener('click', () => {
+                messageInput.value += ' 😊 ';
+            });
+
+            // 全局点击发音 (已经在onclick使用)
+        })();
+    </script>
+    <!-- 确保onclick函数全局有效，再声明一次备用 (已经挂在window) -->
+    <script>
+        // 补充一下发音函数以防上面没有挂载成功
+        window.speakText = function(word) {
+            const synth = window.speechSynthesis;
+            const utterance = new SpeechSynthesisUtterance(word);
+            utterance.lang = 'en-US';
+            utterance.rate = 0.9;
+            synth.speak(utterance);
+            const lt = document.getElementById('listeningText');
+            if (lt) lt.innerText = `🔊 朗读: ${word}`;
+            setTimeout(() => { if(lt) lt.innerText = '点击话筒开始语音对话'; }, 1500);
+        };
+        // 额外确保record按钮长按模拟
+    </script>
+</body>
 </html>
